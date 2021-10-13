@@ -42,7 +42,11 @@
 */
 /**************************************************************************/
 // I2C, no address adjustments or pins
-Adafruit_FT6206::Adafruit_FT6206() { touches = 0; }
+Adafruit_FT6206::Adafruit_FT6206(int8_t _intPin, int8_t _rstPin) {
+  touches = 0;
+  intPin = _intPin;
+  rstPin = _rstPin;
+}
 
 /**************************************************************************/
 /*!
@@ -94,7 +98,7 @@ boolean Adafruit_FT6206::begin(uint8_t thresh) {
 
 /**************************************************************************/
 /*!
-    @brief  Determines if there are any touches detected
+    @brief  Determines if and how many touches detected through I2C
     @returns Number of touches detected, can be 0, 1 or 2
 */
 /**************************************************************************/
@@ -104,6 +108,19 @@ uint8_t Adafruit_FT6206::touched(void) {
     n = 0;
   }
   return n;
+}
+
+/**************************************************************************/
+/*!
+    @brief  Determines if there are any touches detected by reading the INT pin
+    @returns Whether a touch is detected
+*/
+/**************************************************************************/
+bool Adafruit_FT6206::touchedInt(void) {
+  //TODO
+  if(intPin==-1) return 0; //pin not defined
+  bool touched = !digitalRead(rstPin);
+  return touched
 }
 
 /**************************************************************************/
@@ -122,7 +139,7 @@ TS_Point Adafruit_FT6206::getPoint(uint8_t n) {
   if ((touches == 0) || (n > 1)) {
     return TS_Point(0, 0, 0);
   } else {
-    return TS_Point(touchX[n], touchY[n], 1);
+    return TS_Point(touchX[n], touchY[n], 1, touchGesture);
   }
 }
 
@@ -153,8 +170,8 @@ void Adafruit_FT6206::readData(void) {
     Serial.println(i2cdat[i], HEX);
   }
 #endif
-
-  touches = i2cdat[0x02];
+  touchGesture = i2cdat[0x01];  //read save gesture
+  touches = i2cdat[0x02];       //save number of touches
   if ((touches > 2) || (touches == 0)) {
     touches = 0;
   }
@@ -174,7 +191,7 @@ void Adafruit_FT6206::readData(void) {
     Serial.println(i2cdat[0x01]);
   }
 #endif
-
+  
   for (uint8_t i = 0; i < 2; i++) {
     touchX[i] = i2cdat[0x03 + i * 6] & 0x0F;
     touchX[i] <<= 8;
@@ -279,6 +296,7 @@ TS_Point::TS_Point(int16_t _x, int16_t _y, int16_t _z) {
   x = _x;
   y = _y;
   z = _z;
+  gesture = 0;
 }
 
 /**************************************************************************/

@@ -30,6 +30,18 @@
 #define FT6236_CHIPID 0x36  //!< Chip selecting
 #define FT6236U_CHIPID 0x64 //!< Chip selecting
 
+/*
+enum gest{
+  GEST_UP =       0x10,
+  GEST_RIGHT =    0x14,
+  GEST_DOWN =     0x18,
+  GEST_LEFT =     0x1c,
+  GEST_ZOOM_IN =  0x48,
+  GEST_ZOOM_OUT = 0x49,
+  GEST_NONE =     0x00
+}
+*/
+
 // calibrated for Adafruit 2.8" ctp screen
 #define FT62XX_DEFAULT_THRESHOLD 128 //!< Default threshold for touch detection
 
@@ -42,7 +54,8 @@
 class TS_Point {
 public:
   TS_Point(void);
-  TS_Point(int16_t x, int16_t y, int16_t z);
+  TS_Point(int16_t x, int16_t y, int16_t z, uint8_t gesture);
+  
 
   bool operator==(TS_Point);
   bool operator!=(TS_Point);
@@ -50,6 +63,8 @@ public:
   int16_t x; /*!< X coordinate */
   int16_t y; /*!< Y coordinate */
   int16_t z; /*!< Z coordinate (often used for pressure) */
+  //gest gesture;
+  uint8_t gesture;
 };
 
 /**************************************************************************/
@@ -60,9 +75,10 @@ public:
 /**************************************************************************/
 class Adafruit_FT6206 {
 public:
-  Adafruit_FT6206(void);
+  Adafruit_FT6206(int8_t intPin = -1, int8_t rstPin = -1);
   boolean begin(uint8_t thresh = FT62XX_DEFAULT_THRESHOLD);
   uint8_t touched(void);
+  bool touchedInt(void);
   TS_Point getPoint(uint8_t n = 0);
 
   // void autoCalibrate(void);
@@ -74,6 +90,9 @@ private:
   void readData(void);
   uint8_t touches;
   uint16_t touchX[2], touchY[2], touchID[2];
+  uint8_t touchGesture;
+  int8_t rstPin;
+  int8_t intPin;
 };
 
 #endif // ADAFRUIT_FT6206_LIBRARY
